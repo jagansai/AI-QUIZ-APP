@@ -216,6 +216,9 @@
                 return;
             }
 
+            // Disable the button to prevent multiple submissions
+            document.querySelector('#ai-form button').disabled = true;
+            
             const topic = document.getElementById('topic').value;
             const level = document.getElementById('level').value;
             const numQuestions = parseInt(document.getElementById('num-questions').value, 10);
@@ -237,6 +240,7 @@
                 const btn = document.querySelector('#ai-form button');
                 btn.textContent = 'Reset';
                 btn.name = 'Reset';
+                btn.disabled = false;
             } catch {
                 document.getElementById('result').textContent = 'Failed to load AI questions.';
             }
