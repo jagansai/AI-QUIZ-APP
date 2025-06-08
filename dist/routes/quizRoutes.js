@@ -7,8 +7,7 @@ const router = (0, express_1.Router)();
 const quizController = new quizController_1.QuizController();
 function setQuizRoutes(app) {
     app.use('/api/quiz', router);
-    // router.get('/', quizController.getQuiz.bind(quizController));
-    //router.post('/submit', quizController.submitAnswer.bind(quizController));
+    router.post('/submit', quizController.submitAnswer.bind(quizController));
     router.post('/ai', quizController.getAIQuiz.bind(quizController));
 }
 exports.setQuizRoutes = setQuizRoutes;
