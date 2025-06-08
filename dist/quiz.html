@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Quiz App</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f4f4f4;
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 40px auto;
+            background: #fff;
+            padding: 24px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            text-align: center;
+        }
+
+        .question {
+            margin-bottom: 20px;
+        }
+
+        .options label {
+            display: block;
+            margin-bottom: 8px;
+            cursor: pointer;
+        }
+
+        button {
+            background: #0078d7;
+            color: #fff;
+            border: none;
+            padding: 10px 24px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        button:disabled {
+            background: #ccc;
+        }
+
+        .result {
+            text-align: center;
+            font-size: 1.2em;
+            margin-top: 24px;
+        }
+
+        #ai-form {
+            margin-bottom: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            max-width: 350px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        #ai-form label {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        #ai-form input,
+        #ai-form select {
+            width: 100%;
+            box-sizing: border-box;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>Quiz App</h1>
+        <form id="ai-form">
+            <label>Topic: <input type="text" id="topic" required></label>
+            <label>Level:
+                <select id="level">
+                    <option value="beginner">Beginner</option>
+                    <option value="intermediate">Intermediate</option>
+                    <option value="advanced">Advanced</option>
+                </select>
+            </label>
+            <button type="submit">Get Questions</button>
+        </form>
+        <form id="quiz-form">
+            <div id="quiz-questions"></div>
+            <button type="submit" id="submit-btn" style="display:none;">Submit Answers</button>
+        </form>
+        <div class="result" id="result"></div>
+    </div>
+    <script>
+        let currentQuestions = [];
+        let currentAnswers = {};
+        let aiMode = false;
+        let totalQuestions = 0;
+
+        async function fetchQuestions() {
+            aiMode = false;
+            const res = await fetch('/api/quiz');
+            const questions = await res.json();
+            currentQuestions = questions;
+            currentAnswers = {};
+            document.getElementById('submit-btn').style.display = 'none';
+            return questions;
+        }
+
+        async function fetchAIQuestions(topic, level) {
+            aiMode = true;
+            const res = await fetch('/api/quiz/ai', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ topic, level })
+            });
+            const questions = await res.json();
+            totalQuestions = questions.length;
+            currentQuestions = questions;
+            currentAnswers = {};
+            return questions;
+        }
+
+        function renderQuestions(questions) {
+            const quizDiv = document.getElementById('quiz-questions');
+            quizDiv.innerHTML = '';
+            questions.forEach((q, idx) => {
+                const qDiv = document.createElement('div');
+                qDiv.className = 'question';
+                qDiv.innerHTML = `<strong>Q${idx + 1}: ${q.questionText}</strong>`;
+                const optionsDiv = document.createElement('div');
+                optionsDiv.className = 'options';
+                q.options.forEach(opt => {
+                    const id = `q${q.id || idx}_${opt}`;
+                    const checked = currentAnswers[q.id || idx] === opt ? 'checked' : '';
+                    optionsDiv.innerHTML += `
+                        <label><input type="radio" name="q${q.id || idx}" value="${opt}" required ${checked}> ${opt}</label>
+                    `;
+                });
+                qDiv.appendChild(optionsDiv);
+                quizDiv.appendChild(qDiv);
+            });
+            // Show the submit button only if there are questions
+            document.getElementById('submit-btn').style.display = questions.length > 0 ? '' : 'none';
+        }
+
+        document.getElementById('ai-form').addEventListener('submit', async function (e) {
+            e.preventDefault();
+            const topic = document.getElementById('topic').value;
+            const level = document.getElementById('level').value;
+            // Clear questions while loading
+            document.getElementById('quiz-questions').innerHTML = '';
+            document.getElementById('result').textContent = 'Loading AI questions...';
+            document.getElementById('submit-btn').style.display = 'none';
+            try {
+                const questions = await fetchAIQuestions(topic, level);
+                renderQuestions(questions);
+                document.getElementById('result').textContent = '';
+            } catch {
+                document.getElementById('result').textContent = 'Failed to load AI questions.';
+            }
+        });
+
+        document.getElementById('quiz-form').addEventListener('change', function (e) {
+            if (e.target && e.target.name && e.target.value) {
+                currentAnswers[e.target.name.replace('q', '')] = e.target.value;
+            }
+        });
+
+        document.getElementById('quiz-form').addEventListener('submit', async function (e) {
+            e.preventDefault();
+
+            console.log("AI Mode:", aiMode);
+            // If in AI mode, check answers on frontend
+            if (aiMode) {
+                let score = 0;
+                const answers = []
+                for (const q of currentQuestions) {
+                    const qid = q.id || currentQuestions.indexOf(q);
+                    if (currentAnswers[qid]) {
+                        answers.push({ questionId: qid, userAnswer: currentAnswers[qid], correctAnswer: q.correctAnswer });
+                    }
+                }
+
+                const res = await fetch('/api/quiz/submit', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ answers })
+                });
+                const result = await res.json();
+                document.getElementById('result').textContent = `You scored ${result.score} out of ${totalQuestions}!`;
+            } else {
+                // Default mode: submit to backend
+                const answers = [];
+                for (const q of currentQuestions) {
+                    const qid = q.id;
+                    if (currentAnswers[qid]) {
+                        answers.push({ questionId: qid, selectedOption: currentAnswers[qid] });
+                    }
+                }
+                const res = await fetch('/api/quiz/submit', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ answers })
+                });
+                const result = await res.json();
+                document.getElementById('result').textContent = `You scored ${result.score} out of ${result.total}!`;
+            }
+        });
+
+        // Load default questions on page load
+        fetchQuestions().then(renderQuestions);
+    </script>
+</body>
+
+</html>
