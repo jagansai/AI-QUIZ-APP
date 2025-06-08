@@ -61,9 +61,9 @@ class QuizController {
     }
     getAIQuiz(req, res) {
         return __awaiter(this, void 0, void 0, function* () {
-            const { topic, level } = req.body;
+            const { topic, level, numQuestions } = req.body;
             try {
-                const questions = yield (0, questionGenerator_1.generateQuestions)(topic, level);
+                const questions = yield (0, questionGenerator_1.generateQuestions)(topic, level, numQuestions);
                 // For AI quiz, send correctAnswer to frontend for client-side validation
                 res.status(200).json(questions);
             }

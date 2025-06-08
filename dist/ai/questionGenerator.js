@@ -19,10 +19,10 @@ dotenv_1.default.config();
 const openai = new openai_1.default({
     apiKey: process.env.OPENAI_API_KEY,
 });
-function generateQuestions(topic, level) {
+function generateQuestions(topic, level, numQuestions = 5) {
     var _a;
     return __awaiter(this, void 0, void 0, function* () {
-        const prompt = `Generate 5 multiple-choice quiz questions about "${topic}" for a "${level}" learner. Format as JSON: [{questionText, options, correctAnswer}]`;
+        const prompt = `Generate ${numQuestions} multiple-choice quiz questions about "${topic}" for a "${level}" learner. Format as JSON: [{questionText, options, correctAnswer}]`;
         const response = yield openai.chat.completions.create({
             model: 'gpt-3.5-turbo',
             messages: [{ role: 'user', content: prompt }],

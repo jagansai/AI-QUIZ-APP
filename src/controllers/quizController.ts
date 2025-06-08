@@ -46,7 +46,7 @@ export class QuizController {
         const answers: { questionId: string; userAnswer: string, correctAnswer: string }[] = req.body.answers;
         let score = 0;
         answers.forEach(({ questionId, userAnswer, correctAnswer }) => {
-            
+
             if (correctAnswer.trim().toLowerCase() === userAnswer.trim().toLowerCase()) {
                 score += 1;
             }
@@ -55,9 +55,9 @@ export class QuizController {
     }
 
     public async getAIQuiz(req: Request, res: Response): Promise<void> {
-        const { topic, level } = req.body;
+        const { topic, level, numQuestions } = req.body;
         try {
-            const questions = await generateQuestions(topic, level);
+            const questions = await generateQuestions(topic, level, numQuestions);
             // For AI quiz, send correctAnswer to frontend for client-side validation
             res.status(200).json(questions);
         } catch (err) {

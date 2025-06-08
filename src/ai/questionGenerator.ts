@@ -6,8 +6,8 @@ const openai = new OpenAI({
     apiKey: process.env.OPENAI_API_KEY,
 });
 
-export async function generateQuestions(topic: string, level: string) {
-    const prompt = `Generate 5 multiple-choice quiz questions about "${topic}" for a "${level}" learner. Format as JSON: [{questionText, options, correctAnswer}]`;
+export async function generateQuestions(topic: string, level: string, numQuestions: number = 5) {
+    const prompt = `Generate ${numQuestions} multiple-choice quiz questions about "${topic}" for a "${level}" learner. Format as JSON: [{questionText, options, correctAnswer}]`;
     const response = await openai.chat.completions.create({
         model: 'gpt-3.5-turbo',
         messages: [{ role: 'user', content: prompt }],

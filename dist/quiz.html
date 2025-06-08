@@ -95,8 +95,19 @@
                     <option value="advanced">Advanced</option>
                 </select>
             </label>
+            <label>Number of Questions:
+                <select id="num-questions">
+                    <option value="10">10</option>
+                    <option value="15">15</option>
+                    <option value="20">20</option>
+                </select>
+            </label>
+            <label style="display: flex; align-items: center; gap: 8px;">
+                <input type="checkbox" id="use-timer"> Use Timer
+            </label>
             <button type="submit">Get Questions</button>
         </form>
+        <div id="timer" style="text-align:center; font-size:1.2em; margin-bottom:12px; display:none;"></div>
         <form id="quiz-form">
             <div id="quiz-questions"></div>
             <button type="submit" id="submit-btn" style="display:none;">Submit Answers</button>
@@ -119,12 +130,12 @@
             return questions;
         }
 
-        async function fetchAIQuestions(topic, level) {
+        async function fetchAIQuestions(topic, level, numQuestions) {
             aiMode = true;
             const res = await fetch('/api/quiz/ai', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ topic, level })
+                body: JSON.stringify({ topic, level, numQuestions })
             });
             const questions = await res.json();
             totalQuestions = questions.length;
@@ -160,18 +171,58 @@
             document.getElementById('submit-btn').style.display = (questions.length > 0 && !showAnswers) ? '' : 'none';
         }
 
+        let timerInterval = null;
+        let timeLeft = 0;
+        function startTimer(seconds) {
+            clearInterval(timerInterval);
+            timeLeft = seconds;
+            const timerDiv = document.getElementById('timer');
+            timerDiv.style.display = '';
+            timerDiv.textContent = `Time left: ${formatTime(timeLeft)}`;
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                timerDiv.textContent = `Time left: ${formatTime(timeLeft)}`;
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    timerDiv.textContent = 'Time is up!';
+                    disableQuizAndShowResult();
+                }
+            }, 1000);
+        }
+        function stopTimer() {
+            clearInterval(timerInterval);
+            document.getElementById('timer').style.display = 'none';
+        }
+        function formatTime(seconds) {
+            const m = Math.floor(seconds / 60);
+            const s = seconds % 60;
+            return `${m}:${s.toString().padStart(2, '0')}`;
+        }
+        function disableQuizAndShowResult() {
+            renderQuestions(currentQuestions, true);
+            document.getElementById('submit-btn').disabled = true;
+            document.getElementById('result').textContent = 'Time is up!';
+        }
+
         document.getElementById('ai-form').addEventListener('submit', async function (e) {
             e.preventDefault();
             const topic = document.getElementById('topic').value;
             const level = document.getElementById('level').value;
+            const numQuestions = parseInt(document.getElementById('num-questions').value, 10);
+            const useTimer = document.getElementById('use-timer').checked;
             // Clear questions while loading
             document.getElementById('quiz-questions').innerHTML = '';
             document.getElementById('result').textContent = 'Loading AI questions...';
             document.getElementById('submit-btn').style.display = 'none';
+            document.getElementById('submit-btn').disabled = false;
+            stopTimer();
             try {
-                const questions = await fetchAIQuestions(topic, level);
+                const questions = await fetchAIQuestions(topic, level, numQuestions);
                 renderQuestions(questions);
                 document.getElementById('result').textContent = '';
+                if (useTimer) {
+                    startTimer(numQuestions * 30);
+                }
             } catch {
                 document.getElementById('result').textContent = 'Failed to load AI questions.';
             }
@@ -185,6 +236,7 @@
 
         document.getElementById('quiz-form').addEventListener('submit', async function (e) {
             e.preventDefault();
+            stopTimer();
 
             console.log("AI Mode:", aiMode);
             // If in AI mode, check answers on frontend
