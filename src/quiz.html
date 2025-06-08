@@ -188,6 +188,7 @@
                     disableQuizAndShowResult();
                 }
             }, 1000);
+            document.getElementById('use-timer').disabled = true;
         }
         function stopTimer() {
             clearInterval(timerInterval);
@@ -206,6 +207,15 @@
 
         document.getElementById('ai-form').addEventListener('submit', async function (e) {
             e.preventDefault();
+
+            // if the name of the button is "Reset", reset the quiz and do NOT fetch questions
+            if (e.submitter && e.submitter.name === "Reset") {
+                resetQuiz();
+                document.querySelector('#ai-form button').textContent = 'Get Questions';
+                document.querySelector('#ai-form button').name = '';
+                return;
+            }
+
             const topic = document.getElementById('topic').value;
             const level = document.getElementById('level').value;
             const numQuestions = parseInt(document.getElementById('num-questions').value, 10);
@@ -223,6 +233,10 @@
                 if (useTimer) {
                     startTimer(numQuestions * 30);
                 }
+                // change the button to Reset and set its name
+                const btn = document.querySelector('#ai-form button');
+                btn.textContent = 'Reset';
+                btn.name = 'Reset';
             } catch {
                 document.getElementById('result').textContent = 'Failed to load AI questions.';
             }
@@ -277,6 +291,17 @@
                 renderQuestions(currentQuestions, true); // Show correct answers and disable inputs
             }
         });
+
+        function resetQuiz() {
+            currentQuestions = [];
+            currentAnswers = {};
+            document.getElementById('quiz-questions').innerHTML = '';
+            document.getElementById('result').textContent = '';
+            document.getElementById('submit-btn').style.display = 'none';
+            stopTimer();
+            document.getElementById('ai-form').reset();
+            document.getElementById('use-timer').disabled = false;
+        }
 
         // Load default questions on page load
         fetchQuestions().then(renderQuestions);
