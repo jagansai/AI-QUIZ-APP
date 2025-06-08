@@ -133,7 +133,7 @@
             return questions;
         }
 
-        function renderQuestions(questions) {
+        function renderQuestions(questions, showAnswers = false) {
             const quizDiv = document.getElementById('quiz-questions');
             quizDiv.innerHTML = '';
             questions.forEach((q, idx) => {
@@ -143,17 +143,21 @@
                 const optionsDiv = document.createElement('div');
                 optionsDiv.className = 'options';
                 q.options.forEach(opt => {
-                    const id = `q${q.id || idx}_${opt}`;
-                    const checked = currentAnswers[q.id || idx] === opt ? 'checked' : '';
+                    const qid = q.id || idx;
+                    const checked = currentAnswers[qid] === opt ? 'checked' : '';
+                    let correctMark = '';
+                    if (showAnswers && q.correctAnswer && opt.trim().toLowerCase() === q.correctAnswer.trim().toLowerCase()) {
+                        correctMark = ' ✅';
+                    }
                     optionsDiv.innerHTML += `
-                        <label><input type="radio" name="q${q.id || idx}" value="${opt}" required ${checked}> ${opt}</label>
+                        <label><input type="radio" name="q${qid}" value="${opt}" required ${checked} ${showAnswers ? 'disabled' : ''}> ${opt}${correctMark}</label>
                     `;
                 });
                 qDiv.appendChild(optionsDiv);
                 quizDiv.appendChild(qDiv);
             });
-            // Show the submit button only if there are questions
-            document.getElementById('submit-btn').style.display = questions.length > 0 ? '' : 'none';
+            // Show the submit button only if there are questions and not showing answers
+            document.getElementById('submit-btn').style.display = (questions.length > 0 && !showAnswers) ? '' : 'none';
         }
 
         document.getElementById('ai-form').addEventListener('submit', async function (e) {
@@ -186,7 +190,7 @@
             // If in AI mode, check answers on frontend
             if (aiMode) {
                 let score = 0;
-                const answers = []
+                const answers = [];
                 for (const q of currentQuestions) {
                     const qid = q.id || currentQuestions.indexOf(q);
                     if (currentAnswers[qid]) {
@@ -201,6 +205,7 @@
                 });
                 const result = await res.json();
                 document.getElementById('result').textContent = `You scored ${result.score} out of ${totalQuestions}!`;
+                renderQuestions(currentQuestions, true); // Show correct answers and disable inputs
             } else {
                 // Default mode: submit to backend
                 const answers = [];
@@ -217,6 +222,7 @@
                 });
                 const result = await res.json();
                 document.getElementById('result').textContent = `You scored ${result.score} out of ${result.total}!`;
+                renderQuestions(currentQuestions, true); // Show correct answers and disable inputs
             }
         });
 
