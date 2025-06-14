@@ -87,25 +87,27 @@
     <div class="container">
         <h1>Quiz App</h1>
         <form id="ai-form">
-            <label>Topic: <input type="text" id="topic" required></label>
-            <label>Level:
-                <select id="level">
-                    <option value="beginner">Beginner</option>
-                    <option value="intermediate">Intermediate</option>
-                    <option value="advanced">Advanced</option>
-                </select>
-            </label>
-            <label>Number of Questions:
-                <select id="num-questions">
-                    <option value="10">10</option>
-                    <option value="15">15</option>
-                    <option value="20">20</option>
-                </select>
-            </label>
-            <label style="display: flex; align-items: center; gap: 8px;">
-                <input type="checkbox" id="use-timer"> Use Timer
-            </label>
-            <button type="submit">Get Questions</button>
+            <! -- Add a placeholder for the text input -->
+                <label>Topic: <input type="text" id="topic" required
+                        placeholder="Enter any topic or even a phrase ( E.g. Give me math questions for 3rd grade)"></label>
+                <label>Level:
+                    <select id="level">
+                        <option value="beginner">Beginner</option>
+                        <option value="intermediate">Intermediate</option>
+                        <option value="advanced">Advanced</option>
+                    </select>
+                </label>
+                <label>Number of Questions:
+                    <select id="num-questions">
+                        <option value="10">10</option>
+                        <option value="15">15</option>
+                        <option value="20">20</option>
+                    </select>
+                </label>
+                <label style="display: flex; align-items: center; gap: 8px;">
+                    <input type="checkbox" id="use-timer"> Use Timer
+                </label>
+                <button type="submit">Get Questions</button>
         </form>
         <div id="timer" style="text-align:center; font-size:1.2em; margin-bottom:12px; display:none;"></div>
         <form id="quiz-form">
@@ -218,14 +220,14 @@
 
             // Disable the button to prevent multiple submissions
             document.querySelector('#ai-form button').disabled = true;
-            
+
             const topic = document.getElementById('topic').value;
             const level = document.getElementById('level').value;
             const numQuestions = parseInt(document.getElementById('num-questions').value, 10);
             const useTimer = document.getElementById('use-timer').checked;
             // Clear questions while loading
             document.getElementById('quiz-questions').innerHTML = '';
-            document.getElementById('result').textContent = 'Loading AI questions...';
+            document.getElementById('result').textContent = 'Loading questions...';
             document.getElementById('submit-btn').style.display = 'none';
             document.getElementById('submit-btn').disabled = false;
             stopTimer();
